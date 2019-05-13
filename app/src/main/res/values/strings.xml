@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">AutOut</string>
+    <string name="download">Download</string>
+    <string name="write_file">This app needs access to your file storage so that it can write files.</string>
 </resources>
