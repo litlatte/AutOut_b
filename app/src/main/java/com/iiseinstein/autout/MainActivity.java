@@ -1,30 +1,13 @@
 package com.iiseinstein.autout;
 
 import android.Manifest;
-import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.AsyncTask;
-
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.URL;
-import java.net.URLConnection;
 
-import android.os.Debug;
+import android.net.Uri;
 import android.os.Environment;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -38,6 +21,8 @@ import java.io.File;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.iiseinstein.autout.DownloadFile.isNetworkConnected;
 
 
 public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks {
@@ -68,41 +53,30 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     //variabili per il download del file
     private static final String TAG = MainActivity.class.getSimpleName();//Nome della classe MainActivity
-    private String url="https://raw.githubusercontent.com/gruppoautismo/GestioneFile/master/list.lst";//Contiene il link da cui verrà scaricato il file
+    private String listurl="https://raw.githubusercontent.com/gruppoautismo/GestioneFile/master/list.lst";//Contiene il link da cui verrà scaricato il file
     private static final int WRITE_REQUEST_CODE = 300;//Codice che serve per chiedere al dispositivo che é un operazione di scrittura
     //Inizializzo una funzione che servirà poi per controllare se il dispositivo é connesso a internet
 
-    public static boolean isNetworkConnected(Context c) {
-        ConnectivityManager conManager = (ConnectivityManager) c.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = conManager.getActiveNetworkInfo();
-        return ( netInfo != null && netInfo.isConnected() );//La funzione ritorna un valore bool
-    }
 
 
 
 
 
-    @Override
 
 
-    protected void onCreate(Bundle savedInstanceState) {
-
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        Log.d("Write id", Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
+    public void download(String filename, String link){
         if(isNetworkConnected(this)){
 
             if (EasyPermissions.hasPermissions(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                 //Get the URL entered
                 Toast.makeText(this, "Download file necessari...", Toast.LENGTH_LONG);
-                new DownloadFile().execute(url);
+                new DownloadFile().execute(link);
 
 
-                File newf = new File(Environment.getExternalStorageDirectory() + "/AutOut/newlist.lst");//Oggetto di tipo file per il nuovo file
+                File newf = new File(Environment.getExternalStorageDirectory() + "/AutOut/new" +filename);//Oggetto di tipo file per il nuovo file
                 Log.e("Newfileex", Boolean.toString(newf.exists()));
                 List<String> newfsl = new ArrayList<>();//Array di stringhe che conterrà il file appena scaricato
-                File oldf = new File(Environment.getExternalStorageDirectory() + "/AutOut/" + "list.lst");//Oggetto di tipo file per il nuovo file
+                File oldf = new File(Environment.getExternalStorageDirectory() + "/AutOut/" + filename);//Oggetto di tipo file per il nuovo file
                 List<String> oldfsl = new ArrayList<>();//Array di stringhe che conterrà il file appena scaricato
                 Log.e("1a", "1a");
                 readFile(newf, newfsl);//Legge il nuovo file
@@ -151,6 +125,18 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 Log.e("Sorry", "Sorry");
             }
         }
+    }
+    public void checkupdatelist(){
+        download("list.lst", listurl);
+    }
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        Log.d("Write id", Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        checkupdatelist();
         /*File f = new File(Environment.getExternalStorageDirectory() + "/AutOut");
         if(f.exists()){
             f= new File(Environment.getExternalStorageDirectory()+"/AutOut/");
@@ -171,6 +157,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             @Override
             public void onClick(View v) {
                 Log.d("button log", "Clicked!");
+                apri_trasporti();
             }
         });
         aiuto_b=(ImageView)findViewById(R.id.Aiuto);
@@ -209,10 +196,16 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         Intent intent = new Intent(this, aiuto.class);
         startActivity(intent);
     }
+    void apri_trasporti(){//Funzione necessaria per far partire l'attività in caso cliccato Aiuto
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW,
+                Uri.parse("http://www.muoversi.regione.lombardia.it/planner/"));
+        startActivity(browserIntent);
+    }
+
     @Override
     public void onPermissionsGranted(int requestCode, List<String> perms) {//Funzione che viene chiamata se l'utente(La prima volta) da i permessi di scrittura all'app
         //Download the file once permission is granted
-        new DownloadFile().execute(url);//Richiama la funzione per scarivare il file
+        new DownloadFile().execute(listurl);//Richiama la funzione per scarivare il file
     }
 
     @Override
@@ -223,74 +216,5 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     /**
      * Async Task to download file from URL
      */
-    private class DownloadFile extends AsyncTask<String, String, String> {
 
-        private String fileName;//Nome del file
-        private String folder;
-
-        //@Override
-        //protected void onPreExecute() {
-        //}
-
-        @Override
-        protected String doInBackground(String... f_url) {//Funzione che scaricherà il file in background
-            int count;
-            try {
-
-                URL url = new URL(f_url[0]);//L'url da cui scarcare il file viene parsato in URL
-                URLConnection connection = url.openConnection();//Crea una connesione con l'url
-                connection.connect();//Usa la connesione creata e si connette
-
-
-                int lengthOfFile = connection.getContentLength();//Viene letta la lunghezza del file
-
-
-                InputStream input = new BufferedInputStream(url.openStream(), 8192);
-
-
-                //Extract file name from URL
-                fileName = f_url[0].substring(f_url[0].lastIndexOf('/') + 1, f_url[0].length());
-
-
-                //External directory path to save file
-                folder = Environment.getExternalStorageDirectory() + File.separator + "AutOut/";
-
-                //Create androiddeft folder if it does not exist
-                File directory = new File(folder);
-
-                if (!directory.exists()) {
-                    directory.mkdirs();
-                }
-
-                // Output stream to write file
-                OutputStream output = new FileOutputStream(folder +"new"+ fileName);
-
-                byte data[] = new byte[1024];
-
-                long total = 0;
-
-                while ((count = input.read(data)) != -1) {
-                    total += count;
-                    // publishing the progress....
-                    Log.d(TAG, "Progress: " + (int) ((total * 100) / lengthOfFile));
-
-                    // writing data to file
-                    output.write(data, 0, count);
-                }
-
-                // flushing output
-                output.flush();
-
-                // closing streams
-                output.close();
-                input.close();
-                return "Downloaded at: " + folder + fileName;
-
-            } catch (Exception e) {
-                Log.e("Error: ", e.getMessage());
-            }
-
-            return "Something went wrong";
-        }
-    }
 }
