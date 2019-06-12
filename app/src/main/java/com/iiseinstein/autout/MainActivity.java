@@ -190,7 +190,17 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         impostazioni_b.getLayoutParams().width = width/2;
         impostazioni_b.setX(width/2);
         impostazioni_b.setY(2*(-((height/2) -60)));
+        impostazioni_b.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                apri_impostazioni();
+            }
+        });
 
+    }
+    void apri_impostazioni(){
+        Intent IntImp = new Intent(this, Impostazioni_ac.class);
+        startActivity(IntImp);
     }
     void apri_aiuto(){//Funzione necessaria per far partire l'attività in caso cliccato Aiuto
         Intent intent = new Intent(this, aiuto.class);

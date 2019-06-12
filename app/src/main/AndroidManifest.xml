@@ -14,7 +14,23 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".Trasporti_act"></activity>
+        <activity
+            android:name=".Impostazioni_ac"
+            android:label="@string/title_activity_impostazioni_ac"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.iiseinstein.autout.MainActivity" />
+        </activity>
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.iiseinstein.autout.MainActivity" />
+        </activity>
+        <activity android:name=".Trasporti_act" />
         <activity android:name=".aiuto" />
         <activity android:name=".MainActivity">
             <intent-filter>
