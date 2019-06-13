@@ -64,70 +64,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
 
 
-    public void download(String filename, String link){
-        if(isNetworkConnected(this)){
-
-            if (EasyPermissions.hasPermissions(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                //Get the URL entered
-                Toast.makeText(this, "Download file necessari...", Toast.LENGTH_LONG);
-                new DownloadFile().execute(link);
-
-
-                File newf = new File(Environment.getExternalStorageDirectory() + "/AutOut/new" +filename);//Oggetto di tipo file per il nuovo file
-                Log.e("Newfileex", Boolean.toString(newf.exists()));
-                List<String> newfsl = new ArrayList<>();//Array di stringhe che conterrà il file appena scaricato
-                File oldf = new File(Environment.getExternalStorageDirectory() + "/AutOut/" + filename);//Oggetto di tipo file per il nuovo file
-                List<String> oldfsl = new ArrayList<>();//Array di stringhe che conterrà il file appena scaricato
-                Log.e("1a", "1a");
-                readFile(newf, newfsl);//Legge il nuovo file
-                if (oldf.exists()) {
-                    Log.e("1b", "1b");
-                    readFile(oldf, oldfsl);
-                }
-                Log.e("1c", "1c");
-                if (oldf.exists()){
-                    String tmp = newfsl.get(0);
-                    String tmp2 = "";
-                    for (int i = 1; i < tmp.length(); i++) {
-                        tmp2 += tmp.charAt(i);
-
-                    }
-                    float newver = Float.parseFloat(tmp2);
-                    tmp = oldfsl.get(0);
-                    tmp2 = "";
-                    for (int i = 1; i < tmp.length(); i++) {
-                        tmp2 += tmp.charAt(i);
-
-                    }
-                    float oldver = Float.parseFloat(tmp2);
-                    Log.d("-------newver", Float.toString(newver));
-                    Log.d("-------oldver", Float.toString(oldver));
-
-
-                    if (newver > oldver) {
-                        oldf.delete();
-                        newf.renameTo(oldf);
-                    } else {
-                        newf.delete();
-                    }
-                }else{
-                    newf.renameTo(oldf);
-                }
-
-
-
-
-
-            } else {
-                //If permission is not present request for the same.
-                EasyPermissions.requestPermissions(MainActivity.this, getString(R.string.write_file), WRITE_REQUEST_CODE, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                EasyPermissions.requestPermissions(MainActivity.this, getString(R.string.write_file), WRITE_REQUEST_CODE, Manifest.permission.READ_EXTERNAL_STORAGE);
-                Log.e("Sorry", "Sorry");
-            }
-        }
-    }
     public void checkupdatelist(){
         download("list.lst", listurl);
+        download("lista1.lst", "https://raw.githubusercontent.com/gruppoautismo/GestioneFile/master/lista1.lst");
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -210,6 +149,85 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         Intent browserIntent = new Intent(Intent.ACTION_VIEW,
                 Uri.parse("http://www.muoversi.regione.lombardia.it/planner/"));
         startActivity(browserIntent);
+    }
+
+    public void download(String filename, String link){
+        boolean tempa;
+        File deleter;
+        if(isNetworkConnected(this)){
+
+            if (EasyPermissions.hasPermissions(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                //Get the URL entered
+                Toast.makeText(this, "Download file necessari...", Toast.LENGTH_LONG);
+                new DownloadFile().execute(link);
+
+
+                File newf = new File(Environment.getExternalStorageDirectory() + "/AutOut/new" +filename);//Oggetto di tipo file per il nuovo file
+                while (!newf.exists()){
+                    Log.d("chk", "file non esiste");
+                }
+
+                Log.e("Newfileex", Boolean.toString(newf.exists()));
+                Log.d("nome file", filename);
+
+                List<String> newfsl = new ArrayList<>();//Array di stringhe che conterrà il file appena scaricato
+                File oldf = new File(Environment.getExternalStorageDirectory() + "/AutOut/" + filename);//Oggetto di tipo file per il nuovo file
+                List<String> oldfsl = new ArrayList<>();//Array di stringhe che conterrà il file appena scaricato
+                Log.e("1a", "1a");
+                readFile(newf, newfsl);//Legge il nuovo file
+                if (oldf.exists()) {
+                    Log.e("1b", "1b");
+                    readFile(oldf, oldfsl);
+                }
+                Log.e("1c", "1c");
+                if (oldf.exists()){
+                    String tmp = newfsl.get(0);
+                    String tmp2 = "";
+                    for (int i = 1; i < tmp.length(); i++) {
+                        tmp2 += tmp.charAt(i);
+
+                    }
+                    float newver = Float.parseFloat(tmp2);
+                    tmp = oldfsl.get(0);
+                    tmp2 = "";
+                    for (int i = 1; i < tmp.length(); i++) {
+                        tmp2 += tmp.charAt(i);
+
+                    }
+                    float oldver = Float.parseFloat(tmp2);
+                    Log.d("-------newver", Float.toString(newver));
+                    Log.d("-------oldver", Float.toString(oldver));
+
+
+                    if (newver > oldver) {
+                        Log.d("check_vers", "versione remota maggiore");
+                        tempa = oldf.delete();
+                        tempa = newf.renameTo(oldf);
+                    } else {
+                        Log.d("check_vers", "versione locale maggiore ");
+
+                        deleter = new File(newf.getPath() );
+                        tempa =  deleter.delete();
+                        Log.d("Path deleter", newf.getPath() );
+
+                    }
+
+                    Log.d("stato tempa", Boolean.toString(tempa));
+                }else{
+                    tempa =  newf.renameTo(oldf);
+                }
+
+
+
+
+
+            } else {
+                //If permission is not present request for the same.
+                EasyPermissions.requestPermissions(MainActivity.this, getString(R.string.write_file), WRITE_REQUEST_CODE, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                EasyPermissions.requestPermissions(MainActivity.this, getString(R.string.write_file), WRITE_REQUEST_CODE, Manifest.permission.READ_EXTERNAL_STORAGE);
+                Log.e("Sorry", "Sorry");
+            }
+        }
     }
 
     @Override
