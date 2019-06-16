@@ -19,6 +19,7 @@ import android.widget.Toast;
 import pub.devrel.easypermissions.EasyPermissions;
 import java.io.File;
 
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,12 +62,97 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
 
 
+    float version_convert(String s_ver){
+        float ver;
+        String s_ver2 = "";
+        for(int i=1; i<s_ver.length(); i++){
+            s_ver2 += s_ver.charAt(i);
 
+        }
+        ver = Float.parseFloat(s_ver2);
+        return ver;
+    }
+
+
+    void FileUpdate(File oldf, File newf, float oldver, float newver){
+
+            boolean tempa;
+            File deleter;
+            if (oldf.exists()) {
+                if (newver > oldver) {
+                    Log.d("check_vers", "versione remota maggiore");
+                    tempa = oldf.delete();
+                    tempa = newf.renameTo(oldf);
+                } else {
+                    Log.d("check_vers", "versione locale maggiore ");
+
+                    deleter = new File(newf.getPath());
+                    tempa = deleter.delete();
+                    Log.d("Path deleter", newf.getPath());
+
+                }
+
+                Log.d("stato tempa", Boolean.toString(tempa));
+            } else {
+                tempa = newf.renameTo(oldf);
+            }
+
+    }
+    void FileUpdate1(File oldf, String newf_s, float oldver, float newver){
+        File tmp;
+        boolean tempa;
+        File deleter;
+        if (oldf.exists()) {
+            if (newver > oldver) {
+                Log.d("check_vers", "versione remota maggiore");
+                tempa = oldf.delete();
+                download(newf_s, "https://raw.githubusercontent.com/gruppoautismo/GestioneFile/master/" + newf_s);
+            } else {
+                Log.d("check_vers", "versione locale maggiore ");
+            }
+
+        }
+    }
 
 
     public void checkupdatelist(){
+        boolean tmp;
+        EasyPermissions.requestPermissions(MainActivity.this, getString(R.string.write_file), WRITE_REQUEST_CODE, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        EasyPermissions.requestPermissions(MainActivity.this, getString(R.string.write_file), WRITE_REQUEST_CODE, Manifest.permission.READ_EXTERNAL_STORAGE);
+
+        File dir = new File(Environment.getExternalStorageDirectory() + "/AutOut");
+        if(!dir.exists()) {
+            tmp = dir.mkdir();
+        }
+
+        while(!dir.exists()){
+            tmp = dir.mkdir();
+        }
         download("list.lst", listurl);
-        download("lista1.lst", "https://raw.githubusercontent.com/gruppoautismo/GestioneFile/master/lista1.lst");
+        List<String> list_s = new ArrayList<>();
+        List<String> tmp_list_s = new ArrayList<>();
+        File f = new File(Environment.getExternalStorageDirectory() + "/AutOut/" + "list.lst");
+        if(f.exists()) {
+            readFile(f, list_s);
+            String fileName;
+            File f_tmp;
+            float oldver;
+            float newver;
+            for (int i = 1; i < list_s.size(); i++) {
+                fileName = list_s.get(i).split(":")[0];
+                f_tmp = new File(fileName);
+                if (f_tmp.exists()) {
+                    readFile(f_tmp, tmp_list_s);
+                    oldver = version_convert(tmp_list_s.get(0));
+                    newver = version_convert(list_s.get(i).split(":")[1]);
+                    FileUpdate1(f_tmp, fileName, oldver, newver);
+                } else {
+                    download(fileName, "https://raw.githubusercontent.com/gruppoautismo/GestioneFile/master/" + fileName);
+                }
+            }
+        }else{
+
+        }
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -182,37 +268,10 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 Log.e("1c", "1c");
                 if (oldf.exists()){
                     String tmp = newfsl.get(0);
-                    String tmp2 = "";
-                    for (int i = 1; i < tmp.length(); i++) {
-                        tmp2 += tmp.charAt(i);
-
-                    }
-                    float newver = Float.parseFloat(tmp2);
+                    float newver = version_convert(tmp);
                     tmp = oldfsl.get(0);
-                    tmp2 = "";
-                    for (int i = 1; i < tmp.length(); i++) {
-                        tmp2 += tmp.charAt(i);
-
-                    }
-                    float oldver = Float.parseFloat(tmp2);
-                    Log.d("-------newver", Float.toString(newver));
-                    Log.d("-------oldver", Float.toString(oldver));
-
-
-                    if (newver > oldver) {
-                        Log.d("check_vers", "versione remota maggiore");
-                        tempa = oldf.delete();
-                        tempa = newf.renameTo(oldf);
-                    } else {
-                        Log.d("check_vers", "versione locale maggiore ");
-
-                        deleter = new File(newf.getPath() );
-                        tempa =  deleter.delete();
-                        Log.d("Path deleter", newf.getPath() );
-
-                    }
-
-                    Log.d("stato tempa", Boolean.toString(tempa));
+                    float oldver = version_convert(tmp);
+                    FileUpdate(oldf, newf, oldver, newver);
                 }else{
                     tempa =  newf.renameTo(oldf);
                 }
@@ -227,13 +286,20 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 EasyPermissions.requestPermissions(MainActivity.this, getString(R.string.write_file), WRITE_REQUEST_CODE, Manifest.permission.READ_EXTERNAL_STORAGE);
                 Log.e("Sorry", "Sorry");
             }
+        }else{
+            if(new File(filename).exists()){
+                Toast.makeText(this, "Impossibile cercare aggiornamenti!", Toast.LENGTH_LONG);
+            }else{
+                finish();
+                System.exit(0);
+            }
         }
     }
 
     @Override
     public void onPermissionsGranted(int requestCode, List<String> perms) {//Funzione che viene chiamata se l'utente(La prima volta) da i permessi di scrittura all'app
         //Download the file once permission is granted
-        new DownloadFile().execute(listurl);//Richiama la funzione per scarivare il file
+        //new DownloadFile().execute(listurl);//Richiama la funzione per scarivare il file
     }
 
     @Override
